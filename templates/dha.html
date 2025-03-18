@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Futuristic Truck Model</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/MTLLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        body {
+            margin: 0;
+            background: radial-gradient(circle, #0a0f2b, #010214);
+            font-family: 'Poppins', sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+        canvas { display: block; }
+
+        /* Loading Screen */
+        #loading-screen {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            color: cyan;
+            z-index: 2000;
+            transition: opacity 1s ease-out;
+        }
+
+        /* Navbar */
+        nav {
+    margin-top: 20px; /* Adjust this value as needed */
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    border-bottom: 2px solid cyan;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+        nav a {
+            color: #ff9900;
+            text-decoration: none;
+            font-size: 18px;
+            transition: 0.3s;
+        }
+        nav a:hover {
+            color: lime;
+            text-shadow: 0 0 10px cyan;
+        }
+
+        #model-container {
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-screen">🚀 Loading 3D Truck...</div>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="model.html">3D Model</a>
+        <a href="instructions.html">Maintenance</a>
+    </nav>
+    <main>
+        <div id="model-container"></div>
+    </main>
+
+    <script>
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById("model-container").appendChild(renderer.domElement);
+
+        // Controls
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.1;
+        controls.rotateSpeed = 0.5;
+
+        // Lights
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1.5); // White ambient light for natural lighting
+        scene.add(ambientLight);
+
+        const spotLight = new THREE.SpotLight(0xffffff, 2);
+        spotLight.position.set(10, 20, 10);
+        scene.add(spotLight);
+
+        // Particle Stars Effect
+        const particles = new THREE.BufferGeometry();
+        const particleCount = 500;
+        const positions = [];
+        for (let i = 0; i < particleCount; i++) {
+            positions.push((Math.random() - 0.5) * 2000);
+            positions.push((Math.random() - 0.5) * 2000);
+            positions.push((Math.random() - 0.5) * 2000);
+        }
+        particles.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        const particleMaterial = new THREE.PointsMaterial({ color: 0x00ffff, size: 2 });
+        const stars = new THREE.Points(particles, particleMaterial);
+        scene.add(stars);
+
+        // Load Truck Model with Correct Colors
+        const mtlLoader = new THREE.MTLLoader();
+        mtlLoader.load("Red_Truck__0312151401_texture.mtl", function (materials) {
+            materials.preload();
+            const objLoader = new THREE.OBJLoader();
+            objLoader.setMaterials(materials);
+            objLoader.load("Red_Truck__0312151401_texture.obj", function (object) {
+                object.traverse(function (child) {
+                    if (child.isMesh) {
+                        child.material.needsUpdate = true; // Ensure material updates properly
+                    }
+                });
+                object.scale.set(300, 300, 300);
+                object.position.set(0, -50, 0);
+                scene.add(object);
+
+                // Hide loading screen after model loads
+                document.getElementById("loading-screen").style.opacity = "0";
+                setTimeout(() => {
+                    document.getElementById("loading-screen").style.display = "none";
+                }, 1000);
+            }, 
+            function (xhr) { // Progress callback
+                console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+            },
+            function (error) { // Error callback
+                console.error("An error occurred while loading the 3D model:", error);
+            });
+        });
+
+        camera.position.set(0, 200, 500);
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            stars.rotation.y += 0.0005;
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Responsive Handling
+        window.addEventListener("resize", () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        });
+    </script>
+    
+    <footer style="text-align:center; padding:10px; font-size:14px; color:#0ff;">
+        &copy; 2025 Futuristic Truck Viewer 🚛✨
+    </footer>
+</body>
+</html>
