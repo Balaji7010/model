@@ -114,22 +114,32 @@
         // Load Truck Model with Correct Colors
         const mtlLoader = new THREE.MTLLoader();
         mtlLoader.load("Red_Truck__0312151401_texture.mtl", function (materials) {
-    materials.preload();
-    const objLoader = new THREE.OBJLoader();
-    objLoader.setMaterials(materials);
-    objLoader.load("Red_Truck__0312151401_texture.obj", function (object) {
-        object.scale.set(300, 300, 300);
-        object.position.set(0, -50, 0);
-        scene.add(object);
-        document.getElementById("loading-screen").style.opacity = "0";
-        setTimeout(() => {
-            document.getElementById("loading-screen").style.display = "none";
-        }, 1000);
-    }, 
-    function (xhr) { console.log((xhr.loaded / xhr.total * 100) + '% loaded'); },
-    function (error) { console.error("Model loading error:", error); });
-});
+            materials.preload();
+            const objLoader = new THREE.OBJLoader();
+            objLoader.setMaterials(materials);
+            objLoader.load("Red_Truck__0312151401_texture.obj", function (object) {
+                object.traverse(function (child) {
+                    if (child.isMesh) {
+                        child.material.needsUpdate = true; // Ensure material updates properly
+                    }
+                });
+                object.scale.set(300, 300, 300);
+                object.position.set(0, -50, 0);
+                scene.add(object);
 
+                // Hide loading screen after model loads
+                document.getElementById("loading-screen").style.opacity = "0";
+                setTimeout(() => {
+                    document.getElementById("loading-screen").style.display = "none";
+                }, 1000);
+            }, 
+            function (xhr) { // Progress callback
+                console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+            },
+            function (error) { // Error callback
+                console.error("An error occurred while loading the 3D model:", error);
+            });
+        });
 
         camera.position.set(0, 200, 500);
 
