@@ -113,11 +113,11 @@
 
         // Load Truck Model with Correct Colors
         const mtlLoader = new THREE.MTLLoader();
-        mtlLoader.load("/Red_Truck__0312151401_texture.mtl", function (materials) {
+        mtlLoader.load("Red_Truck__0312151401_texture.mtl", function (materials) {
             materials.preload();
             const objLoader = new THREE.OBJLoader();
             objLoader.setMaterials(materials);
-            objLoader.load("/Red_Truck__0312151401_texture.obj", function (object) {
+            objLoader.load("Red_Truck__0312151401_texture.obj", function (object) {
                 object.traverse(function (child) {
                     if (child.isMesh) {
                         child.material.needsUpdate = true; // Ensure material updates properly
