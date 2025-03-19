@@ -9,7 +9,7 @@
     "routes": [
         {
             "src": "/templates/(.*)",
-            "dest": "/templates/dha.intml"
+            "dest": "/templates/dha.html"
         },
         {
             "src": "/(.*)",
