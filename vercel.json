@@ -8,7 +8,7 @@
     ],
     "routes": [
         {
-            "src": "/templates/(.*)",
+            "src": "/templates/dha.html",
             "dest": "/templates/$1"
         },
         {
