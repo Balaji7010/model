@@ -180,130 +180,68 @@
     </footer>
 
     <script>
-        // Firebase Configuration
-// Firebase Configuration
-const firebaseConfig = {
-    apiKey: "AIzaSyAAddt5NWp4Rnj0FxH5gUvoq19ndcbQ0sM",
-    authDomain: "sdas-c728e.firebaseapp.com",
-    databaseURL: "https://sdas-c728e-default-rtdb.firebaseio.com",
-    projectId: "sdas-c728e",
-    storageBucket: "sdas-c728e.firebasestorage.app",
-    messagingSenderId: "52946024763",
-    appId: "1:52946024763:web:c0289a347400cb4e0edf1e"
-};
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();  // Realtime Database
-const firestore = firebase.firestore(); // Firestore Database
-
-// Default location (Vellore, Tamil Nadu)
-const DEFAULT_LATITUDE = 12.879080;
-const DEFAULT_LONGITUDE = 79.122219;
-
-// Initialize Map
-var map = L.map('map').setView([DEFAULT_LATITUDE, DEFAULT_LONGITUDE], 13);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
-}).addTo(map);
-
-var vehicleMarker = L.marker([DEFAULT_LATITUDE, DEFAULT_LONGITUDE]).addTo(map);
-
-// Function to Fetch Data from Realtime Database
-function fetchRealtimeData() {
-    const ref = database.ref("driver_status/current_status");
-
-    ref.on("value", (snapshot) => {
-        if (snapshot.exists()) {
-            const data = snapshot.val();
-            console.log("Realtime Database Data:", data);
-
-            // Use data if available, otherwise set default location
-            const latitude = data.latitude || DEFAULT_LATITUDE;
-            const longitude = data.longitude || DEFAULT_LONGITUDE;
-
-            document.getElementById("driverStatus").innerText = data.driverStatus || "Unknown";
-            document.getElementById("vehicleLocation").innerText = `Lat: ${latitude}, Long: ${longitude}`;
-
-            // Update Map
-            updateVehicleLocation(latitude, longitude);
-        } else {
-            console.log("No data available in Realtime Database. Using default location.");
-            updateVehicleLocation(DEFAULT_LATITUDE, DEFAULT_LONGITUDE);
-            document.getElementById("vehicleLocation").innerText = `Lat: ${DEFAULT_LATITUDE}, Long: ${DEFAULT_LONGITUDE}`;
+        // Initialize Leaflet map
+        var map = L.map('map').setView([12.879080, 79.122219], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        // Add marker with a custom icon
+        
+        
+        var vehicleMarker = L.marker([12.879080, 79.122219]).addTo(map);
+        
+        // Alert sound for drowsiness detection
+        let alertSound = new Audio('alert.mp3');
+        alertSound.load();
+        
+        function playAlertSound() {
+            alertSound.play();
         }
-    }, (error) => {
-        console.error("Error fetching data from Realtime Database:", error);
-    });
-}
-
-// Function to Fetch Data from Firestore
-function fetchFirestoreData() {
-    const docRef = firestore.collection("driver_status").doc("current_status");
-
-    docRef.onSnapshot((doc) => {
-        if (doc.exists) {
-            const data = doc.data();
-            console.log("Firestore Data:", data);
-
-            document.getElementById("eyeStatus").innerText = data.eyeStatus || "Unknown";
-            document.getElementById("drowsinessLevel").innerText = data.drowsinessLevel || "Unknown";
-            document.getElementById("drowsinessAlertMessage").innerText = data.alert || "No Alert";
-            document.getElementById("drowsinessAlertMessage").style.color = data.alert === "Alert!" ? "red" : "green";
-        } else {
-            console.log("No document found in Firestore.");
+        
+        function updateVehicleLocation(latitude, longitude) {
+            vehicleMarker.setLatLng([latitude, longitude]);
+            map.panTo([latitude, longitude], { animate: true, duration: 1 });
+            console.log(`📍 Vehicle location updated: Lat: ${latitude}, Long: ${longitude}`);
         }
-    }, (error) => {
-        console.error("Error fetching data from Firestore:", error);
-    });
-}
-
-// Function to Store Data in Firestore
-function storeDataToFirestore(driverStatus, eyeStatus, drowsinessLevel, alert) {
-    firestore.collection("driver_status").doc("current_status").set({
-        driverStatus: driverStatus,
-        eyeStatus: eyeStatus,
-        drowsinessLevel: drowsinessLevel,
-        alert: alert,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => {
-        console.log("Data stored successfully in Firestore.");
-    }).catch((error) => {
-        console.error("Error storing data to Firestore:", error);
-    });
-}
-
-// Function to Store Data in Realtime Database
-function storeDataToRealtimeDB(latitude, longitude, driverStatus) {
-    database.ref("driver_status/current_status").set({
-        latitude: latitude,
-        longitude: longitude,
-        driverStatus: driverStatus
-    }).then(() => {
-        console.log("Data stored successfully in Realtime Database.");
-    }).catch((error) => {
-        console.error("Error storing data to Realtime Database:", error);
-    });
-}
-
-// Function to Update Vehicle Location on Map
-function updateVehicleLocation(latitude, longitude) {
-    if (!latitude || !longitude) {
-        latitude = DEFAULT_LATITUDE;
-        longitude = DEFAULT_LONGITUDE;
-    }
-
-    vehicleMarker.setLatLng([latitude, longitude]);
-    map.panTo([latitude, longitude]);
-}
-
-// Call Firebase Data Fetching
-window.onload = function () {
-    fetchRealtimeData();
-    fetchFirestoreData();
-};
-
-    </script>
+        
+        function updateDrowsinessAlert(alertStatus) {
+            let alertElement = document.getElementById('drowsinessAlertMessage');
+            alertElement.textContent = alertStatus || "No Alert";
+            alertElement.style.color = alertStatus === "Alert" ? "red" : "green";
+            if (alertStatus === "Alert") playAlertSound();
+        }
+        
+        function fetchStatus() {
+            fetch('/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data) return;
+        
+                    document.getElementById('driverStatus').textContent = data.driverStatus ?? "Unknown";
+                    document.getElementById('driverStatus').style.color = data.driverStatus === "Drowsy" ? "red" : "green";
+        
+                    let latitude = data.gps?.latitude ?? 12.879080;
+                    let longitude = data.gps?.longitude ?? 79.122219;
+                    document.getElementById('vehicleLocation').textContent = `Lat: ${latitude}, Long: ${longitude}`;
+                    updateVehicleLocation(latitude, longitude);
+        
+                    document.getElementById('eyeStatus').textContent = data.eyeStatus ?? "Open";
+                    document.getElementById('drowsinessLevel').textContent = data.drowsinessLevel ?? "Low";
+                    updateDrowsinessAlert(data.drowsinessAlert);
+                    document.getElementById('blindSpotDetection').textContent = data.blindSpotStatus ?? "Clear";
+                })
+                .catch(error => {
+                    console.error('❌ Error fetching status:', error);
+                    document.getElementById('driverStatus').innerHTML = '<p style="color: red;">Server connection lost!</p>';
+                });
+        }
+        
+        // Fetch GPS data every 500ms for real-time updates
+        setInterval(fetchStatus, 1000);
+        
+            </script>
+            
     
 </body>
 </html>
