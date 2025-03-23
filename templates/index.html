@@ -212,30 +212,41 @@
             if (alertStatus === "Alert") playAlertSound();
         }
         
-        function fetchStatus() {
-            fetch('/status')
-                .then(response => response.json())
-                .then(data => {
-                    if (!data) return;
-        
-                    document.getElementById('driverStatus').textContent = data.driverStatus ?? "Unknown";
-                    document.getElementById('driverStatus').style.color = data.driverStatus === "Drowsy" ? "red" : "green";
-        
-                    let latitude = data.gps?.latitude ?? 12.879080;
-                    let longitude = data.gps?.longitude ?? 79.122219;
-                    document.getElementById('vehicleLocation').textContent = `Lat: ${latitude}, Long: ${longitude}`;
-                    updateVehicleLocation(latitude, longitude);
-        
-                    document.getElementById('eyeStatus').textContent = data.eyeStatus ?? "Open";
-                    document.getElementById('drowsinessLevel').textContent = data.drowsinessLevel ?? "Low";
-                    updateDrowsinessAlert(data.drowsinessAlert);
-                    document.getElementById('blindSpotDetection').textContent = data.blindSpotStatus ?? "Clear";
-                })
-                    .catch(error => {
+function fetchStatus() {
+    fetch('/status')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Received Data:', data); // Debugging line
+
+            if (!data) return;
+
+            let driverStatusElement = document.getElementById('driverStatus');
+            if (data.driverStatus) {
+                driverStatusElement.textContent = data.driverStatus;
+                driverStatusElement.style.color = data.driverStatus === "Drowsy" ? "red" : "green";
+            } else {
+                driverStatusElement.textContent = "Unknown";
+            }
+
+            let latitude = data.gps?.latitude ?? 12.879080;
+            let longitude = data.gps?.longitude ?? 79.122219;
+            document.getElementById('vehicleLocation').textContent = `Lat: ${latitude}, Long: ${longitude}`;
+            updateVehicleLocation(latitude, longitude);
+
+            document.getElementById('eyeStatus').textContent = data.eyeStatus ?? "Open";
+            document.getElementById('drowsinessLevel').textContent = data.drowsinessLevel ?? "Low";
+            updateDrowsinessAlert(data.drowsinessAlert);
+            document.getElementById('blindSpotDetection').textContent = data.blindSpotStatus ?? "Clear";
+        })
+        .catch(error => {
             console.error('❌ Error fetching status:', error);
-            document.getElementById('driverStatus').innerHTML = '<p style="color: red;">Server connection lost!</p>';
-        }
-);
+            let driverStatusElement = document.getElementById('driverStatus');
+            if (driverStatusElement) {
+                driverStatusElement.innerHTML = '<p style="color: red;">Server connection lost!</p>';
+            }
+        });
+}
+
         }
         
         // Fetch GPS data every 500ms for real-time updates
