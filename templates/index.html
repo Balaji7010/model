@@ -231,10 +231,7 @@
                     updateDrowsinessAlert(data.drowsinessAlert);
                     document.getElementById('blindSpotDetection').textContent = data.blindSpotStatus ?? "Clear";
                 })
-                .catch(error => {
-                    console.error('❌ Error fetching status:', error);
-                    document.getElementById('driverStatus').innerHTML = '<p style="color: red;">Server connection lost!</p>';
-                });
+);
         }
         
         // Fetch GPS data every 500ms for real-time updates
